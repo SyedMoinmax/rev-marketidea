@@ -1,0 +1,54 @@
+{
+  "name": "VerificationDocument",
+  "type": "object",
+  "properties": {
+    "professional_id": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "government_id",
+        "business_registration",
+        "address_proof",
+        "insurance",
+        "license",
+        "other"
+      ]
+    },
+    "file_url": {
+      "type": "string"
+    },
+    "file_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "reviewed_by": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "professional_id",
+    "user_id",
+    "type",
+    "file_url"
+  ]
+}

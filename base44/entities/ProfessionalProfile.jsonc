@@ -1,0 +1,142 @@
+{
+  "name": "ProfessionalProfile",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "business_name": {
+      "type": "string"
+    },
+    "business_type": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "website": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "province": {
+      "type": "string"
+    },
+    "postal_code": {
+      "type": "string"
+    },
+    "logo_url": {
+      "type": "string"
+    },
+    "portfolio_images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "service_categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "service_areas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "years_experience": {
+      "type": "number"
+    },
+    "license_number": {
+      "type": "string"
+    },
+    "insurance_info": {
+      "type": "string"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "suspended"
+      ],
+      "default": "pending"
+    },
+    "verification_notes": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": false
+    },
+    "average_rating": {
+      "type": "number",
+      "default": 0
+    },
+    "review_count": {
+      "type": "number",
+      "default": 0
+    },
+    "trust_score": {
+      "type": "number",
+      "default": 0
+    },
+    "offer_acceptance_rate": {
+      "type": "number",
+      "default": 0
+    },
+    "total_offers_submitted": {
+      "type": "number",
+      "default": 0
+    },
+    "total_offers_accepted": {
+      "type": "number",
+      "default": 0
+    },
+    "response_time_hours": {
+      "type": "number"
+    },
+    "stripe_account_id": {
+      "type": "string"
+    },
+    "subscription_tier": {
+      "type": "string",
+      "enum": [
+        "free",
+        "basic",
+        "professional",
+        "enterprise"
+      ],
+      "default": "free"
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "availability": {
+      "type": "string",
+      "enum": [
+        "available",
+        "busy",
+        "unavailable"
+      ],
+      "default": "available"
+    }
+  },
+  "required": [
+    "user_id",
+    "business_name"
+  ]
+}

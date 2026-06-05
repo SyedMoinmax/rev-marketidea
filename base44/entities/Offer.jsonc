@@ -1,0 +1,141 @@
+{
+  "name": "Offer",
+  "type": "object",
+  "properties": {
+    "request_id": {
+      "type": "string"
+    },
+    "professional_id": {
+      "type": "string"
+    },
+    "professional_user_id": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "price": {
+      "type": "number"
+    },
+    "price_type": {
+      "type": "string",
+      "enum": [
+        "fixed",
+        "hourly",
+        "range",
+        "negotiable"
+      ],
+      "default": "fixed"
+    },
+    "price_max": {
+      "type": "number"
+    },
+    "deliverables": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "timeline": {
+      "type": "string"
+    },
+    "timeline_days": {
+      "type": "number"
+    },
+    "scope": {
+      "type": "string"
+    },
+    "terms": {
+      "type": "string"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "validation_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "green",
+        "yellow",
+        "red"
+      ],
+      "default": "pending"
+    },
+    "validation_message": {
+      "type": "string"
+    },
+    "validation_recommendations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "overall_score": {
+      "type": "number"
+    },
+    "price_score": {
+      "type": "number"
+    },
+    "quality_score": {
+      "type": "number"
+    },
+    "reputation_score": {
+      "type": "number"
+    },
+    "reliability_score": {
+      "type": "number"
+    },
+    "market_alignment_score": {
+      "type": "number"
+    },
+    "score_label": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "submitted",
+        "visible",
+        "accepted",
+        "rejected",
+        "withdrawn"
+      ],
+      "default": "draft"
+    },
+    "is_visible_to_customer": {
+      "type": "boolean",
+      "default": false
+    },
+    "customer_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "resubmission_count": {
+      "type": "number",
+      "default": 0
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "request_id",
+    "professional_id",
+    "customer_id"
+  ]
+}

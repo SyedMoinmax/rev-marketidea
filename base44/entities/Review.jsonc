@@ -1,0 +1,55 @@
+{
+  "name": "Review",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "type": "string"
+    },
+    "professional_id": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "offer_id": {
+      "type": "string"
+    },
+    "overall_rating": {
+      "type": "number"
+    },
+    "communication_rating": {
+      "type": "number"
+    },
+    "quality_rating": {
+      "type": "number"
+    },
+    "value_rating": {
+      "type": "number"
+    },
+    "timeliness_rating": {
+      "type": "number"
+    },
+    "professionalism_rating": {
+      "type": "number"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "response": {
+      "type": "string"
+    },
+    "is_verified": {
+      "type": "boolean",
+      "default": true
+    },
+    "is_flagged": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "customer_id",
+    "professional_id",
+    "overall_rating"
+  ]
+}

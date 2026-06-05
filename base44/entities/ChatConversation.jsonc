@@ -1,0 +1,49 @@
+{
+  "name": "ChatConversation",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "type": "string"
+    },
+    "professional_id": {
+      "type": "string"
+    },
+    "professional_user_id": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "offer_id": {
+      "type": "string"
+    },
+    "last_message": {
+      "type": "string"
+    },
+    "last_message_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "customer_unread": {
+      "type": "number",
+      "default": 0
+    },
+    "professional_unread": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "archived",
+        "blocked"
+      ],
+      "default": "active"
+    }
+  },
+  "required": [
+    "customer_id",
+    "professional_user_id"
+  ]
+}
