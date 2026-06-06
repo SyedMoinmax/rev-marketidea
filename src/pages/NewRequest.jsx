@@ -17,6 +17,7 @@ export default function NewRequest() {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({
     title: "", description: "", category_id: "", category_name: "", 
     subcategory_id: "", subcategory_name: "", city: "", province: "",
@@ -51,16 +52,21 @@ export default function NewRequest() {
 
   const handleSubmit = async () => {
     setSaving(true);
-    const payload = {
-      ...form,
-      customer_id: user.id,
-      budget_min: form.budget_min ? parseFloat(form.budget_min) : null,
-      budget_max: form.budget_max ? parseFloat(form.budget_max) : null,
-      status: "active",
-      offer_count: 0
-    };
-    const req = await base44.entities.CustomerRequest.create(payload);
-    navigate(`/requests/${req.id}`);
+    try {
+      const payload = {
+        ...form,
+        customer_id: user.id,
+        budget_min: form.budget_min ? parseFloat(form.budget_min) : null,
+        budget_max: form.budget_max ? parseFloat(form.budget_max) : null,
+        status: "active",
+        offer_count: 0
+      };
+      const req = await base44.entities.CustomerRequest.create(payload);
+      navigate(`/requests/${req.id}`);
+    } catch (err) {
+      setSaving(false);
+      setError(err?.message || "Failed to publish request. Make sure your account is set up as a Customer.");
+    }
   };
 
   return (
@@ -253,6 +259,7 @@ export default function NewRequest() {
                 <span>Timeline:</span><span className="text-foreground font-medium">{form.timeline || "Flexible"}</span>
               </div>
             </div>
+            {error && <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setStep(2)} className="flex-1">Back</Button>
               <Button onClick={handleSubmit} className="flex-1 bg-primary text-white" disabled={saving || uploading}>
