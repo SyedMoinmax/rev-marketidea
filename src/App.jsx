@@ -8,6 +8,10 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
 // Pages - Public
 import Landing from '@/pages/Landing';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
 
 // Layout
 import AppLayout from '@/components/layout/AppLayout';
@@ -59,8 +63,12 @@ const AuthenticatedApp = () => {
 
   return (
     <Routes>
-      {/* Public Landing Page */}
+      {/* Public Pages */}
       <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* App Routes with Layout */}
       <Route element={<AppLayout />}>
