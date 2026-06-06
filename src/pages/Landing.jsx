@@ -229,7 +229,7 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+          <div className="hidden lg:flex items-stretch gap-0">
             {steps.map((step, i) => (
               <React.Fragment key={i}>
                 <motion.div
@@ -238,7 +238,7 @@ export default function Landing() {
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.12 }}
                   whileHover={{ y: -6, scale: 1.02 }}
-                  className="relative group p-7 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-white/10 transition-all duration-300 overflow-hidden"
+                  className="relative group p-7 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-white/10 transition-all duration-300 overflow-hidden flex-1"
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${step.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
                   <div className="text-4xl mb-5">{step.icon}</div>
@@ -251,10 +251,9 @@ export default function Landing() {
 
                 {/* Arrow between steps */}
                 {i < steps.length - 1 && (
-                  <div className="hidden lg:flex absolute items-center justify-center"
-                    style={{ left: `calc(${(i + 1) * 25}% - 16px)`, top: "50%", transform: "translateY(-50%)", zIndex: 10 }}>
+                  <div className="flex items-center justify-center px-1 flex-shrink-0 self-center">
                     <motion.div
-                      animate={{ x: [0, 6, 0] }}
+                      animate={{ x: [0, 5, 0] }}
                       transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                       className="w-8 h-8 rounded-full bg-gradient-to-r from-violet-600 to-blue-600 flex items-center justify-center shadow-lg shadow-violet-500/30"
                     >
@@ -263,6 +262,28 @@ export default function Landing() {
                   </div>
                 )}
               </React.Fragment>
+            ))}
+          </div>
+          {/* Mobile/tablet: simple grid without arrows */}
+          <div className="grid md:grid-cols-2 gap-6 lg:hidden">
+            {steps.map((step, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.12 }}
+                whileHover={{ y: -6, scale: 1.02 }}
+                className="relative group p-7 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-white/10 transition-all duration-300 overflow-hidden"
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${step.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
+                <div className="text-4xl mb-5">{step.icon}</div>
+                <div className={`text-5xl font-black bg-gradient-to-r ${step.color} bg-clip-text text-transparent mb-3 leading-none`}>
+                  {step.n}
+                </div>
+                <h3 className="text-base font-bold text-white mb-2">{step.title}</h3>
+                <p className="text-sm text-white/40 leading-relaxed">{step.desc}</p>
+              </motion.div>
             ))}
           </div>
         </div>
