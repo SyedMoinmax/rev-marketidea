@@ -72,14 +72,24 @@ export default function Register() {
       if (result?.access_token) {
         base44.auth.setToken(result.access_token);
       }
-      // Save account type role after token is set
+      // Always save the chosen role — retry up to 3 times to ensure it sticks
       const selectedType = ACCOUNT_TYPES.find(t => t.id === accountType);
-      if (selectedType?.role && selectedType.role !== "customer") {
+      const targetRole = selectedType?.role || "customer";
+      let saved = false;
+      for (let attempt = 0; attempt < 3 && !saved; attempt++) {
         try {
-          await base44.auth.updateMe({ role: selectedType.role });
-        } catch (_) {}
+          await base44.auth.updateMe({ role: targetRole });
+          saved = true;
+        } catch (_) {
+          await new Promise(r => setTimeout(r, 300));
+        }
       }
-      window.location.href = selectedType?.role === "professional" ? "/profile/professional" : "/dashboard";
+      if (!saved) {
+        setError("Failed to save your account type. Please try logging in again.");
+        setLoading(false);
+        return;
+      }
+      window.location.href = targetRole === "professional" ? "/profile/professional" : "/dashboard";
     } catch (err) {
       setError(err.message || "Invalid verification code. Please try again.");
     } finally {

@@ -30,8 +30,9 @@ export default function AuthRedirect() {
       .then((user) => {
         if (!user) { window.location.href = "/login"; return; }
 
-        // If the user has no role or role is the default "user", they need to pick
-        if (!user.role || user.role === "user") {
+        // If the user has no role or role is the platform default "user", they need to pick
+        const knownRoles = ["customer", "professional", "admin"];
+        if (!user.role || !knownRoles.includes(user.role)) {
           setNeedsRoleSelection(true);
           return;
         }
