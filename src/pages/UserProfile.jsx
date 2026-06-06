@@ -1,32 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { User, Mail, Shield, CheckCircle, Loader2, Zap } from "lucide-react";
 
 export default function UserProfile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-
   useEffect(() => {
     base44.auth.me().then(u => { setUser(u); setLoading(false); }).catch(() => setLoading(false));
   }, []);
-
-  const handleSave = async () => {
-    setSaving(true);
-    await base44.auth.updateMe({ role: user.role });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-    setSaving(false);
-  };
 
   if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
   if (!user) return null;
@@ -82,23 +69,14 @@ export default function UserProfile() {
               </div>
               <div>
                 <Label>Account Role</Label>
-                <Select value={user.role || "customer"} onValueChange={v => setUser(u => ({ ...u, role: v }))}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="customer">Customer — Browse and request services</SelectItem>
-                    <SelectItem value="professional">Professional — Submit offers to customer requests</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground mt-1">Changing your role affects what you can do on the platform</p>
+                <div className="mt-1.5 flex items-center gap-2 h-9 px-3 rounded-md border border-input bg-secondary/30 text-sm text-foreground">
+                  {user.role === "admin" ? <><Shield className="w-4 h-4 text-purple-600" /> Admin</> :
+                   user.role === "professional" ? <><Zap className="w-4 h-4 text-blue-600" /> Professional</> :
+                   <><User className="w-4 h-4 text-green-600" /> Customer</>}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Your role is assigned during registration and can only be changed by an admin</p>
               </div>
             </div>
-
-            <Button onClick={handleSave} className="w-full mt-6 bg-primary text-white" disabled={saving}>
-              {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> :
-               saved ? <><CheckCircle className="w-4 h-4 mr-2" /> Saved!</> : "Save Changes"}
-            </Button>
           </CardContent>
         </Card>
 
