@@ -19,7 +19,7 @@ const navLinks = {
   customer: [
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/requests", icon: FileText, label: "My Requests" },
-    { to: "/offers", icon: Send, label: "Offers Received" },
+    { to: "/requests", icon: FileText, label: "My Requests" },
     { to: "/messages", icon: MessageSquare, label: "Messages" },
   ],
   professional: [

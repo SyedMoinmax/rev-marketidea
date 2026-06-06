@@ -7,18 +7,25 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Send, DollarSign, Clock, Zap, TrendingUp, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { VALIDATION_STATUS_CONFIG, getScoreLabel } from "@/lib/constants";
+import { useNavigate } from "react-router-dom";
 
 export default function MyOffers() {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const load = async () => {
       const u = await base44.auth.me().catch(() => null);
       setUser(u);
       if (u) {
+        // Only professionals can access this page
+        if (u.role !== "professional" && u.role !== "admin") {
+          navigate("/dashboard");
+          return;
+        }
         const data = await base44.entities.Offer.filter({ professional_user_id: u.id }, "-created_date", 100);
         setOffers(data);
       }

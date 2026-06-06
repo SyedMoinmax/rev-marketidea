@@ -111,10 +111,7 @@
   ],
   "rls": {
     "create": {
-      "data.customer_id": "{{user.id}}",
-      "user_condition": {
-        "role": "customer"
-      }
+      "data.customer_id": "{{user.id}}"
     },
     "read": {
       "$or": [
