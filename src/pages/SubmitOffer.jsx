@@ -143,6 +143,23 @@ export default function SubmitOffer() {
 
   if (!request) return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
 
+  if (professionalProfile && professionalProfile.verification_status !== "approved") {
+    return (
+      <div className="p-6 lg:p-8 max-w-3xl mx-auto">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="mb-6">
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <div className="flex flex-col items-center text-center py-16">
+          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+            <AlertCircle className="w-8 h-8 text-yellow-600" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground mb-2">Verification Required</h2>
+          <p className="text-muted-foreground max-w-sm">Your account is pending admin approval. You'll be able to submit proposals once your profile has been verified.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 lg:p-8 max-w-3xl mx-auto">
       <div className="flex items-center gap-4 mb-8">

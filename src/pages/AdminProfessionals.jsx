@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { 
   Search, Shield, Loader2, CheckCircle, XCircle, Clock, 
   ExternalLink, FileText, Star, MapPin
@@ -44,6 +45,24 @@ export default function AdminProfessionals() {
   });
 
   const getProDocs = (proId) => documents.filter(d => d.professional_id === proId);
+
+  const handleToggleApproval = async (pro) => {
+    const newStatus = pro.verification_status === "approved" ? "pending" : "approved";
+    setProfessionals(prev => prev.map(p => p.id === pro.id ? { ...p, verification_status: newStatus, is_active: newStatus === "approved" } : p));
+    await base44.entities.ProfessionalProfile.update(pro.id, {
+      verification_status: newStatus,
+      is_active: newStatus === "approved"
+    });
+    await base44.entities.Notification.create({
+      user_id: pro.user_id,
+      type: newStatus === "approved" ? "verification_approved" : "verification_rejected",
+      title: newStatus === "approved" ? "Your profile has been approved! 🎉" : "Profile verification update",
+      message: newStatus === "approved"
+        ? "Congratulations! You can now browse and submit offers on customer requests."
+        : "Your profile has been temporarily suspended. Please contact support.",
+      is_read: false
+    });
+  };
 
   const handleVerification = async (proId, status) => {
     setProcessing(true);
@@ -126,17 +145,19 @@ export default function AdminProfessionals() {
                       <span className="flex items-center gap-1"><FileText className="w-3 h-3" />{proDocs.length} documents uploaded</span>
                     </div>
                   </div>
-                  <div className="flex gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {pro.verification_status === "approved" ? "Approved" : "Not approved"}
+                      </span>
+                      <Switch
+                        checked={pro.verification_status === "approved"}
+                        onCheckedChange={() => handleToggleApproval(pro)}
+                      />
+                    </div>
                     <Button variant="outline" size="sm" onClick={() => setSelectedPro(pro)}>
                       Review
                     </Button>
-                    {pro.verification_status === "pending" && (
-                      <>
-                        <Button size="sm" className="bg-green-600 text-white hover:bg-green-700" onClick={() => { setSelectedPro(pro); }}>
-                          <CheckCircle className="w-3.5 h-3.5 mr-1" /> Approve
-                        </Button>
-                      </>
-                    )}
                   </div>
                 </div>
               </CardContent>
