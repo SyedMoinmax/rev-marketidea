@@ -7,10 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { 
   ArrowLeft, MapPin, DollarSign, Clock, AlertCircle, CheckCircle,
-  Send, Star, Shield, TrendingUp, Zap, MessageSquare, Loader2, ChevronRight
+  Send, Star, Shield, TrendingUp, Zap, MessageSquare, Loader2, ChevronRight, BarChart2
 } from "lucide-react";
 import { VALIDATION_STATUS_CONFIG, getScoreLabel } from "@/lib/constants";
 import OfferCard from "@/components/offers/OfferCard";
+import OfferCompare from "@/components/offers/OfferCompare";
+import { AnimatePresence } from "framer-motion";
 
 export default function RequestDetail() {
   const { id } = useParams();
@@ -21,6 +23,7 @@ export default function RequestDetail() {
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(null);
   const [professionals, setProfessionals] = useState({});
+  const [showCompare, setShowCompare] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -169,13 +172,39 @@ export default function RequestDetail() {
             <h2 className="text-lg font-semibold text-foreground">
               {sortedOffers.length} Validated Offer{sortedOffers.length !== 1 ? "s" : ""}
             </h2>
-            {sortedOffers.length > 0 && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Zap className="w-3 h-3 text-primary" />
-                Sorted by AI Score
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              {sortedOffers.length > 1 && (
+                <Button
+                  size="sm"
+                  variant={showCompare ? "default" : "outline"}
+                  onClick={() => setShowCompare(v => !v)}
+                  className="text-xs h-8"
+                >
+                  <TrendingUp className="w-3.5 h-3.5 mr-1" />
+                  {showCompare ? "Hide Compare" : "Compare Offers"}
+                </Button>
+              )}
+              {sortedOffers.length > 0 && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Zap className="w-3 h-3 text-primary" />
+                  Sorted by AI Score
+                </div>
+              )}
+            </div>
           </div>
+
+          <AnimatePresence>
+            {showCompare && sortedOffers.length > 0 && (
+              <OfferCompare
+                offers={sortedOffers}
+                professionals={professionals}
+                request={request}
+                onAccept={user?.id === request.customer_id && request.status === "active" ? handleAcceptOffer : null}
+                accepting={accepting}
+                onClose={() => setShowCompare(false)}
+              />
+            )}
+          </AnimatePresence>
 
           {sortedOffers.length === 0 ? (
             <Card className="border-border shadow-sm">

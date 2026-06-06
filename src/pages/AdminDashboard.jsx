@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, BarChart, Bar, Cell
+  ResponsiveContainer, BarChart, Bar, Cell, LineChart, Line, Legend
 } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
 import ProfessionalApprovalPanel from "@/components/admin/ProfessionalApprovalPanel";
@@ -45,6 +45,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({ requests: 0, offers: 0, professionals: 0, pendingProfiles: 0, greenOffers: 0, yellowOffers: 0, redOffers: 0 });
   const [requestTrend, setRequestTrend] = useState([]);
   const [offerTrend, setOfferTrend] = useState([]);
+  const [growthData, setGrowthData] = useState([]);
   const [pendingProfiles, setPendingProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
@@ -76,6 +77,20 @@ export default function AdminDashboard() {
         yellow: offers.filter(o => o.created_date?.slice(0, 10) === day && o.validation_status === "yellow").length,
         red: offers.filter(o => o.created_date?.slice(0, 10) === day && o.validation_status === "red").length,
       })));
+
+      // Build 30-day cumulative growth data
+      const months = Array.from({ length: 30 }, (_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (29 - i));
+        return d.toISOString().slice(0, 10);
+      });
+      let cumReqs = 0, cumPros = 0;
+      setGrowthData(months.map((day, i) => {
+        cumReqs += requests.filter(r => r.created_date?.slice(0, 10) === day).length;
+        cumPros += professionals.filter(p => p.created_date?.slice(0, 10) === day).length;
+        const label = i % 5 === 0 ? new Date(day).toLocaleDateString("en-CA", { month: "short", day: "numeric" }) : "";
+        return { day: label, requests: cumReqs, professionals: cumPros };
+      }));
 
       const pending = professionals.filter(p => p.verification_status === "pending");
       setPendingProfiles(pending);
@@ -251,6 +266,40 @@ export default function AdminDashboard() {
                 </Card>
               </motion.div>
             </div>
+
+            {/* 30-Day Growth Chart */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="mb-6">
+              <Card className="border-border shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-primary" /> 30-Day Growth — Active Requests &amp; Professional Registrations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={240}>
+                    <LineChart data={growthData} margin={{ top: 5, right: 10, bottom: 0, left: -20 }}>
+                      <defs>
+                        <filter id="glow-blue">
+                          <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                          <feMerge><feMergeNode in="coloredBlur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                        </filter>
+                        <filter id="glow-emerald">
+                          <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                          <feMerge><feMergeNode in="coloredBlur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                        </filter>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="day" tick={{ fontSize: 10 }} interval={0} />
+                      <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                      <Tooltip contentStyle={{ borderRadius: "10px", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
+                      <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+                      <Line type="monotone" dataKey="requests" stroke="#3B82F6" strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} name="Active Requests" filter="url(#glow-blue)" />
+                      <Line type="monotone" dataKey="professionals" stroke="#10B981" strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} name="Professional Registrations" filter="url(#glow-emerald)" strokeDasharray="5 3" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </motion.div>
 
             {/* Quick Actions */}
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
