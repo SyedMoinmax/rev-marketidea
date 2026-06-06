@@ -20,6 +20,7 @@ export default function RequestDetail() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(null);
+  const [professionals, setProfessionals] = useState({});
 
   useEffect(() => {
     const load = async () => {
@@ -31,7 +32,16 @@ export default function RequestDetail() {
       setRequest(req);
       if (req) {
         const offs = await base44.entities.Offer.filter({ request_id: id }, "-overall_score", 50);
-        setOffers(offs.filter(o => o.is_visible_to_customer || u?.role === "admin"));
+        const visibleOffs = offs.filter(o => o.is_visible_to_customer || u?.role === "admin");
+        setOffers(visibleOffs);
+        // Load professional profiles for display
+        const profIds = [...new Set(visibleOffs.map(o => o.professional_id).filter(Boolean))];
+        if (profIds.length > 0) {
+          const profs = await base44.entities.ProfessionalProfile.list("-created_date", 100);
+          const profMap = {};
+          profs.forEach(p => { profMap[p.id] = p; profMap[p.user_id] = p; });
+          setProfessionals(profMap);
+        }
       }
       setLoading(false);
     };
@@ -40,8 +50,31 @@ export default function RequestDetail() {
 
   const handleAcceptOffer = async (offerId) => {
     setAccepting(offerId);
+    const acceptedOffer = offers.find(o => o.id === offerId);
+
+    // Update offer and request status
     await base44.entities.Offer.update(offerId, { customer_status: "accepted", status: "accepted" });
     await base44.entities.CustomerRequest.update(id, { status: "in_progress", accepted_offer_id: offerId });
+
+    // Reject all other offers on this request
+    const otherOffers = offers.filter(o => o.id !== offerId && o.status !== "withdrawn");
+    for (const other of otherOffers) {
+      await base44.entities.Offer.update(other.id, { customer_status: "rejected", status: "rejected" });
+    }
+
+    // Notify the professional whose offer was accepted
+    if (acceptedOffer?.professional_user_id) {
+      await base44.entities.Notification.create({
+        user_id: acceptedOffer.professional_user_id,
+        type: "offer_accepted",
+        title: "Your offer was accepted! 🎉",
+        message: `The customer accepted your offer for "${request.title}". Please reach out to discuss the next steps.`,
+        link: `/my-offers`,
+        is_read: false,
+        metadata: { request_id: id, offer_id: offerId }
+      });
+    }
+
     const offs = await base44.entities.Offer.filter({ request_id: id });
     setOffers(offs);
     setRequest(r => ({ ...r, status: "in_progress", accepted_offer_id: offerId }));
@@ -79,7 +112,7 @@ export default function RequestDetail() {
             <Badge className={`${STATUS_COLORS[request.status] || "bg-secondary text-secondary-foreground"}`}>{request.status}</Badge>
             <Badge className={`${PRIORITY_COLORS[request.priority] || ""}`}>{request.priority}</Badge>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">{request.category_name} {request.subcategory_name ? `· ${request.subcategory_name}` : ""}</p>
+          <p className="text-sm text-muted-foreground mt-1">{request.category_name}{request.subcategory_name ? ` · ${request.subcategory_name}` : ""}</p>
         </div>
       </div>
 
@@ -154,16 +187,21 @@ export default function RequestDetail() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {sortedOffers.map((offer, index) => (
-                <OfferCard 
-                  key={offer.id} 
-                  offer={offer} 
-                  isTopOffer={index === 0}
-                  acceptedOfferId={request.accepted_offer_id}
-                  onAccept={user?.id === request.customer_id && request.status === "active" ? handleAcceptOffer : null}
-                  accepting={accepting}
-                />
-              ))}
+              {sortedOffers.map((offer, index) => {
+                const prof = professionals[offer.professional_id] || professionals[offer.professional_user_id];
+                return (
+                  <OfferCard
+                    key={offer.id}
+                    offer={offer}
+                    isTopOffer={index === 0}
+                    acceptedOfferId={request.accepted_offer_id}
+                    onAccept={user?.id === request.customer_id && request.status === "active" ? handleAcceptOffer : null}
+                    accepting={accepting}
+                    professionalName={prof?.business_name || null}
+                    professionalRating={prof?.average_rating || 0}
+                  />
+                );
+              })}
             </div>
           )}
         </div>

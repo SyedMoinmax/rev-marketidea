@@ -25,7 +25,10 @@ export default function NewRequest() {
   });
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => navigate("/"));
+    base44.auth.me().then(u => {
+      if (!u) { navigate("/login"); return; }
+      setUser(u);
+    }).catch(() => navigate("/login"));
   }, []);
 
   const update = (k, v) => setForm(f => ({ ...f, [k]: v }));

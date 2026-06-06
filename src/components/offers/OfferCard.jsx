@@ -22,7 +22,7 @@ const ScoreBar = ({ label, value, color }) => (
   </div>
 );
 
-export default function OfferCard({ offer, isTopOffer, acceptedOfferId, onAccept, accepting }) {
+export default function OfferCard({ offer, isTopOffer, acceptedOfferId, onAccept, accepting, professionalName, professionalRating }) {
   const [expanded, setExpanded] = useState(false);
   const validationCfg = VALIDATION_STATUS_CONFIG[offer.validation_status] || VALIDATION_STATUS_CONFIG.pending;
   const scoreInfo = offer.overall_score ? getScoreLabel(offer.overall_score) : null;
@@ -55,10 +55,12 @@ export default function OfferCard({ offer, isTopOffer, acceptedOfferId, onAccept
             </Avatar>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className="font-semibold text-foreground text-sm">Professional</span>
-                <div className="flex items-center gap-1 text-xs text-yellow-600">
-                  <Star className="w-3 h-3 fill-yellow-500" /> 4.8
-                </div>
+                <span className="font-semibold text-foreground text-sm">{professionalName || "Professional"}</span>
+                {professionalRating > 0 && (
+                  <div className="flex items-center gap-1 text-xs text-yellow-600">
+                    <Star className="w-3 h-3 fill-yellow-500" /> {professionalRating.toFixed(1)}
+                  </div>
+                )}
                 <Badge className="text-xs bg-blue-50 text-blue-700 border-blue-100">
                   <Shield className="w-2.5 h-2.5 mr-1" /> Verified
                 </Badge>

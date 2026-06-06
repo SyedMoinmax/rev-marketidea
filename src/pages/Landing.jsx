@@ -93,10 +93,10 @@ export default function Landing() {
             <a href="#live-requests" className="hover:text-white transition-colors">Live Requests</a>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/dashboard">
+            <Link to="/login">
               <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10">Sign In</Button>
             </Link>
-            <Link to="/dashboard">
+            <Link to="/register">
               <Button size="sm" className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-violet-500/20 font-semibold">
                 Get Started
               </Button>
@@ -138,7 +138,7 @@ export default function Landing() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Link to="/dashboard">
+              <Link to="/register">
                 <motion.button
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.97 }}
@@ -148,7 +148,7 @@ export default function Landing() {
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </motion.button>
               </Link>
-              <Link to="/dashboard">
+              <Link to="/register">
                 <motion.button
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.97 }}
@@ -481,7 +481,7 @@ export default function Landing() {
             <p className="text-white/40 mb-10 text-lg">
               Join thousands of Canadians who get fair, AI-validated offers every day.
             </p>
-            <Link to="/dashboard">
+            <Link to="/register">
               <motion.button
                 whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.96 }}
                 className="group inline-flex items-center gap-3 px-10 py-5 rounded-2xl bg-gradient-to-r from-violet-600 to-blue-600 text-white font-bold text-lg shadow-2xl shadow-violet-500/30 hover:shadow-violet-500/60 transition-all duration-300"

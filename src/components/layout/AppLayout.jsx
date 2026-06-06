@@ -53,6 +53,7 @@ export default function AppLayout() {
   }, []);
 
   const role = user?.role || "customer";
+  // professional role gets the professional nav; anything unrecognized falls back to customer
   const links = navLinks[role] || navLinks.customer;
 
   const handleLogout = () => {
