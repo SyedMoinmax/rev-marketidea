@@ -31,6 +31,11 @@ export default function ProfessionalProfilePage() {
     availability: "available", logo_url: ""
   });
 
+  const generateLicenseNumber = () => {
+    const num = Math.floor(100000 + Math.random() * 900000);
+    return `REV-EMP-${num}`;
+  };
+
   useEffect(() => {
     const load = async () => {
       const u = await base44.auth.me().catch(() => null);
@@ -42,7 +47,10 @@ export default function ProfessionalProfilePage() {
         ]);
         if (profs.length > 0) {
           setProfile(profs[0]);
-          setForm({ ...form, ...profs[0] });
+          setForm(f => ({ ...f, ...profs[0] }));
+        } else {
+          // Pre-generate a license number for new profiles
+          setForm(f => ({ ...f, license_number: generateLicenseNumber() }));
         }
         setDocuments(docs);
       }
@@ -173,7 +181,13 @@ export default function ProfessionalProfilePage() {
               <div><Label>Phone</Label><Input value={form.phone} onChange={e => update("phone", e.target.value)} className="mt-1.5" placeholder="+1 (416) 555-0100" /></div>
               <div><Label>Website</Label><Input value={form.website} onChange={e => update("website", e.target.value)} className="mt-1.5" placeholder="https://..." /></div>
               <div><Label>Years of Experience</Label><Input type="number" value={form.years_experience} onChange={e => update("years_experience", e.target.value)} className="mt-1.5" /></div>
-              <div><Label>License Number</Label><Input value={form.license_number} onChange={e => update("license_number", e.target.value)} className="mt-1.5" /></div>
+              <div>
+                <Label>License Number</Label>
+                <div className="mt-1.5 flex items-center gap-2 h-9 px-3 rounded-md border border-input bg-secondary/30 text-sm font-mono text-foreground select-all">
+                  {form.license_number || "—"}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Auto-generated — assigned by the platform</p>
+              </div>
             </div>
           </CardContent>
         </Card>
