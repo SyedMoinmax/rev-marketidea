@@ -51,5 +51,38 @@
     "customer_id",
     "professional_id",
     "overall_rating"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "data.customer_id": "{{user.id}}",
+      "user_condition": {
+        "role": "customer"
+      }
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "data.customer_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.customer_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
 }
