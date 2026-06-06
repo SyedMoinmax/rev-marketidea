@@ -22,7 +22,7 @@ const ScoreBar = ({ label, value, color }) => (
   </div>
 );
 
-export default function OfferCard({ offer, isTopOffer, acceptedOfferId, onAccept, accepting, professionalName, professionalRating }) {
+export default function OfferCard({ offer, isTopOffer, acceptedOfferId, onAccept, accepting, professionalName, professionalRating, isVerified }) {
   const [expanded, setExpanded] = useState(false);
   const validationCfg = VALIDATION_STATUS_CONFIG[offer.validation_status] || VALIDATION_STATUS_CONFIG.pending;
   const scoreInfo = offer.overall_score ? getScoreLabel(offer.overall_score) : null;
@@ -61,9 +61,11 @@ export default function OfferCard({ offer, isTopOffer, acceptedOfferId, onAccept
                     <Star className="w-3 h-3 fill-yellow-500" /> {professionalRating.toFixed(1)}
                   </div>
                 )}
-                <Badge className="text-xs bg-blue-50 text-blue-700 border-blue-100">
-                  <Shield className="w-2.5 h-2.5 mr-1" /> Verified
-                </Badge>
+                {isVerified && (
+                  <Badge className="text-xs bg-blue-50 text-blue-700 border-blue-100">
+                    <Shield className="w-2.5 h-2.5 mr-1" /> Verified
+                  </Badge>
+                )}
               </div>
               <p className="text-xs text-muted-foreground line-clamp-2">{offer.description}</p>
             </div>

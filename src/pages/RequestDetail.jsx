@@ -228,6 +228,7 @@ export default function RequestDetail() {
                     accepting={accepting}
                     professionalName={prof?.business_name || null}
                     professionalRating={prof?.average_rating || 0}
+                    isVerified={prof?.verification_status === "approved"}
                   />
                 );
               })}
