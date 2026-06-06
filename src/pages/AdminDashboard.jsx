@@ -1,35 +1,90 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   Users, FileText, Send, Shield, TrendingUp, CheckCircle,
-  AlertCircle, XCircle, Zap, ArrowRight, Loader2, Activity
+  AlertCircle, Zap, ArrowRight, Loader2, Activity, Clock,
+  UserCheck, XCircle, Eye, ChevronRight
 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, BarChart, Bar, Cell
+} from "recharts";
+import { motion, AnimatePresence } from "framer-motion";
+import ProfessionalApprovalPanel from "@/components/admin/ProfessionalApprovalPanel";
+
+// Animated counter
+function AnimatedNumber({ value, duration = 1200 }) {
+  const [display, setDisplay] = useState(0);
+  const start = useRef(0);
+  useEffect(() => {
+    start.current = 0;
+    const step = (ts) => {
+      if (!start.current) start.current = ts;
+      const progress = Math.min((ts - start.current) / duration, 1);
+      setDisplay(Math.floor(progress * value));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [value, duration]);
+  return <span>{display}</span>;
+}
+
+// Pulse dot
+const PulseDot = ({ color = "bg-green-500" }) => (
+  <span className="relative flex h-2.5 w-2.5">
+    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${color} opacity-60`} />
+    <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${color}`} />
+  </span>
+);
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState({ requests: 0, offers: 0, professionals: 0, pendingVerification: 0, greenOffers: 0, yellowOffers: 0, redOffers: 0 });
-  const [recentRequests, setRecentRequests] = useState([]);
-  const [recentOffers, setRecentOffers] = useState([]);
+  const [stats, setStats] = useState({ requests: 0, offers: 0, professionals: 0, pendingProfiles: 0, greenOffers: 0, yellowOffers: 0, redOffers: 0 });
+  const [requestTrend, setRequestTrend] = useState([]);
+  const [offerTrend, setOfferTrend] = useState([]);
+  const [pendingProfiles, setPendingProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     const load = async () => {
       const [requests, offers, professionals] = await Promise.all([
-        base44.entities.CustomerRequest.list("-created_date", 10),
-        base44.entities.Offer.list("-created_date", 10),
+        base44.entities.CustomerRequest.list("-created_date", 100),
+        base44.entities.Offer.list("-created_date", 100),
         base44.entities.ProfessionalProfile.list("-created_date", 100)
       ]);
-      setRecentRequests(requests.slice(0, 5));
-      setRecentOffers(offers.slice(0, 5));
+
+      // Build last-7-days trend data
+      const days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (6 - i));
+        return d.toISOString().slice(0, 10);
+      });
+
+      setRequestTrend(days.map(day => ({
+        day: new Date(day).toLocaleDateString("en-CA", { weekday: "short" }),
+        requests: requests.filter(r => r.created_date?.slice(0, 10) === day).length,
+        offers: offers.filter(o => o.created_date?.slice(0, 10) === day).length,
+      })));
+
+      setOfferTrend(days.map(day => ({
+        day: new Date(day).toLocaleDateString("en-CA", { weekday: "short" }),
+        green: offers.filter(o => o.created_date?.slice(0, 10) === day && o.validation_status === "green").length,
+        yellow: offers.filter(o => o.created_date?.slice(0, 10) === day && o.validation_status === "yellow").length,
+        red: offers.filter(o => o.created_date?.slice(0, 10) === day && o.validation_status === "red").length,
+      })));
+
+      const pending = professionals.filter(p => p.verification_status === "pending");
+      setPendingProfiles(pending);
+
       setStats({
         requests: requests.length,
         offers: offers.length,
         professionals: professionals.length,
-        pendingVerification: professionals.filter(p => p.verification_status === "pending").length,
+        pendingProfiles: pending.length,
         greenOffers: offers.filter(o => o.validation_status === "green").length,
         yellowOffers: offers.filter(o => o.validation_status === "yellow").length,
         redOffers: offers.filter(o => o.validation_status === "red").length,
@@ -39,163 +94,204 @@ export default function AdminDashboard() {
     load();
   }, []);
 
-  const validationData = [
-    { name: "Green", value: stats.greenOffers, fill: "#10B981" },
-    { name: "Yellow", value: stats.yellowOffers, fill: "#F59E0B" },
-    { name: "Red", value: stats.redOffers, fill: "#EF4444" },
-  ];
+  const handleProfileDecision = (profileId) => {
+    setPendingProfiles(prev => prev.filter(p => p.id !== profileId));
+    setStats(prev => ({ ...prev, pendingProfiles: prev.pendingProfiles - 1 }));
+  };
 
-  if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground animate-pulse">Loading platform data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const kpis = [
+    { label: "Total Requests", value: stats.requests, icon: FileText, gradient: "from-blue-500 to-cyan-500", link: "/admin/requests" },
+    { label: "Total Offers", value: stats.offers, icon: Send, gradient: "from-violet-500 to-purple-600", link: "/admin/offers" },
+    { label: "Professionals", value: stats.professionals, icon: Shield, gradient: "from-emerald-500 to-teal-500", link: "/admin/professionals" },
+    { label: "Pending Approval", value: stats.pendingProfiles, icon: AlertCircle, gradient: "from-amber-500 to-orange-500", link: "/admin/professionals", alert: stats.pendingProfiles > 0 },
+  ];
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">Platform overview and management</p>
-      </div>
+      {/* Header */}
+      <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mb-8">
+        <div className="flex items-center gap-3 mb-1">
+          <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-500/10 rounded-full border border-green-500/20">
+            <PulseDot color="bg-green-500" />
+            <span className="text-xs font-medium text-green-600">Live</span>
+          </div>
+        </div>
+        <p className="text-muted-foreground text-sm">Real-time platform metrics and management</p>
+      </motion.div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {[
-          { label: "Total Requests", value: stats.requests, icon: FileText, color: "bg-blue-100 text-blue-600", link: "/admin/requests" },
-          { label: "Total Offers", value: stats.offers, icon: Send, color: "bg-green-100 text-green-600", link: "/admin/offers" },
-          { label: "Professionals", value: stats.professionals, icon: Shield, color: "bg-purple-100 text-purple-600", link: "/admin/professionals" },
-          { label: "Pending Verification", value: stats.pendingVerification, icon: AlertCircle, color: "bg-yellow-100 text-yellow-600", link: "/admin/professionals" },
-        ].map((s, i) => (
-          <Link to={s.link} key={i}>
-            <Card className="border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">{s.label}</p>
-                    <p className="text-3xl font-bold text-foreground">{s.value}</p>
-                  </div>
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${s.color}`}>
-                    <s.icon className="w-5 h-5" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6 bg-secondary/50 p-1 rounded-xl w-fit">
+        {["overview", "approvals"].map(tab => (
+          <button key={tab} onClick={() => setActiveTab(tab)}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all capitalize ${activeTab === tab ? "bg-white shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+            {tab}
+            {tab === "approvals" && stats.pendingProfiles > 0 && (
+              <span className="ml-2 bg-amber-500 text-white text-xs rounded-full px-1.5 py-0.5">{stats.pendingProfiles}</span>
+            )}
+          </button>
         ))}
       </div>
 
-      {/* Pending Verification Alert */}
-      {stats.pendingVerification > 0 && (
-        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
-          <div className="flex-1">
-            <p className="font-semibold text-yellow-800 text-sm">{stats.pendingVerification} professional{stats.pendingVerification > 1 ? "s" : ""} awaiting verification</p>
-            <p className="text-xs text-yellow-700">Review and approve verification documents to activate their profiles.</p>
-          </div>
-          <Link to="/admin/professionals">
-            <Button size="sm" className="bg-yellow-600 text-white hover:bg-yellow-700 text-xs flex-shrink-0">Review</Button>
-          </Link>
-        </div>
-      )}
-
-      <div className="grid lg:grid-cols-2 gap-6 mb-6">
-        {/* AI Validation Chart */}
-        <Card className="border-border shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Zap className="w-4 h-4 text-primary" /> AI Validation Overview
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={validationData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                  {validationData.map((d, i) => (
-                    <rect key={i} fill={d.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Quick Links */}
-        <Card className="border-border shadow-sm">
-          <CardHeader><CardTitle className="text-base">Quick Actions</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            {[
-              { to: "/admin/professionals", icon: Shield, label: "Review Verifications", badge: stats.pendingVerification > 0 ? `${stats.pendingVerification} pending` : null, badgeClass: "bg-yellow-100 text-yellow-800" },
-              { to: "/admin/requests", icon: FileText, label: "Manage Requests" },
-              { to: "/admin/offers", icon: Send, label: "Moderate Offers" },
-              { to: "/admin/users", icon: Users, label: "User Management" },
-              { to: "/admin/categories", icon: Activity, label: "Category Management" },
-            ].map((item, i) => (
-              <Link to={item.to} key={i}>
-                <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-secondary/50 transition-colors cursor-pointer">
-                  <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
-                    <item.icon className="w-4 h-4 text-primary" />
-                  </div>
-                  <span className="text-sm font-medium text-foreground flex-1">{item.label}</span>
-                  {item.badge && <Badge className={`text-xs ${item.badgeClass}`}>{item.badge}</Badge>}
-                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                </div>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Recent Requests */}
-        <Card className="border-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Recent Requests</CardTitle>
-            <Link to="/admin/requests"><Button variant="ghost" size="sm" className="text-primary text-xs">View all</Button></Link>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-border">
-              {recentRequests.map(r => (
-                <div key={r.id} className="px-6 py-3 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-sm text-foreground truncate max-w-48">{r.title}</p>
-                    <p className="text-xs text-muted-foreground">{r.city}, {r.province}</p>
-                  </div>
-                  <Badge className={r.status === "active" ? "bg-green-100 text-green-800" : "bg-secondary text-secondary-foreground"}>
-                    {r.status}
-                  </Badge>
-                </div>
+      <AnimatePresence mode="wait">
+        {activeTab === "overview" && (
+          <motion.div key="overview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            {/* KPI Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              {kpis.map((k, i) => (
+                <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
+                  <Link to={k.link}>
+                    <Card className={`border-0 shadow-md overflow-hidden cursor-pointer hover:scale-[1.02] transition-transform ${k.alert ? "ring-2 ring-amber-400/50" : ""}`}>
+                      <CardContent className="p-0">
+                        <div className={`h-1.5 w-full bg-gradient-to-r ${k.gradient}`} />
+                        <div className="p-5">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">{k.label}</p>
+                              <p className="text-3xl font-bold text-foreground tabular-nums">
+                                <AnimatedNumber value={k.value} />
+                              </p>
+                            </div>
+                            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${k.gradient} flex items-center justify-center shadow-sm`}>
+                              <k.icon className="w-5 h-5 text-white" />
+                            </div>
+                          </div>
+                          {k.alert && (
+                            <div className="flex items-center gap-1 mt-2">
+                              <PulseDot color="bg-amber-500" />
+                              <span className="text-xs text-amber-600 font-medium">Needs attention</span>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
               ))}
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Recent Offers */}
-        <Card className="border-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Recent Offers</CardTitle>
-            <Link to="/admin/offers"><Button variant="ghost" size="sm" className="text-primary text-xs">View all</Button></Link>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-border">
-              {recentOffers.map(o => (
-                <div key={o.id} className="px-6 py-3 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-sm text-foreground">${o.price?.toLocaleString()} CAD</p>
-                    <p className="text-xs text-muted-foreground">{o.timeline}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {o.overall_score && <span className="text-xs font-bold text-primary">{Math.round(o.overall_score)}/100</span>}
-                    <div className={`w-2 h-2 rounded-full ${
-                      o.validation_status === "green" ? "bg-green-500" :
-                      o.validation_status === "yellow" ? "bg-yellow-500" :
-                      o.validation_status === "red" ? "bg-red-500" : "bg-blue-500"}`} />
-                  </div>
-                </div>
-              ))}
+            {/* Charts */}
+            <div className="grid lg:grid-cols-2 gap-6 mb-6">
+              {/* Requests & Offers Area Chart */}
+              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-primary" /> Incoming Activity (7 days)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <AreaChart data={requestTrend} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
+                        <defs>
+                          <linearGradient id="reqGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                          </linearGradient>
+                          <linearGradient id="offerGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="day" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                        <Tooltip contentStyle={{ borderRadius: "10px", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
+                        <Area type="monotone" dataKey="requests" stroke="#3B82F6" strokeWidth={2} fill="url(#reqGrad)" name="Requests" dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                        <Area type="monotone" dataKey="offers" stroke="#8B5CF6" strokeWidth={2} fill="url(#offerGrad)" name="Offers" dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                    <div className="flex gap-4 justify-center mt-2">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className="w-3 h-0.5 bg-blue-500 rounded inline-block" /> Requests</div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className="w-3 h-0.5 bg-violet-500 rounded inline-block" /> Offers</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Offer Validation Bar Chart */}
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.35 }}>
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-primary" /> AI Offer Validation (7 days)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={offerTrend} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="day" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                        <Tooltip contentStyle={{ borderRadius: "10px", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
+                        <Bar dataKey="green" stackId="a" fill="#10B981" name="Green" radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="yellow" stackId="a" fill="#F59E0B" name="Yellow" />
+                        <Bar dataKey="red" stackId="a" fill="#EF4444" name="Red" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                    <div className="flex gap-4 justify-center mt-2">
+                      {[["#10B981","Green"],["#F59E0B","Yellow"],["#EF4444","Red"]].map(([c,l]) => (
+                        <div key={l} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: c }} /> {l}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+
+            {/* Quick Actions */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+              <Card className="border-border shadow-sm">
+                <CardHeader><CardTitle className="text-base">Quick Actions</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {[
+                      { to: "/admin/professionals", icon: Shield, label: "Review Professionals", badge: stats.pendingProfiles > 0 ? stats.pendingProfiles : null },
+                      { to: "/admin/requests", icon: FileText, label: "Manage Requests" },
+                      { to: "/admin/offers", icon: Send, label: "Moderate Offers" },
+                      { to: "/admin/users", icon: Users, label: "User Management" },
+                      { to: "/admin/categories", icon: Activity, label: "Categories" },
+                    ].map((item, i) => (
+                      <Link to={item.to} key={i}>
+                        <div className="flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-accent/30 hover:border-primary/30 transition-all group">
+                          <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary/10 transition-colors">
+                            <item.icon className="w-4 h-4 text-primary" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground flex-1">{item.label}</span>
+                          {item.badge && <Badge className="bg-amber-100 text-amber-800 text-xs">{item.badge}</Badge>}
+                          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {activeTab === "approvals" && (
+          <motion.div key="approvals" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <ProfessionalApprovalPanel
+              profiles={pendingProfiles}
+              onDecision={handleProfileDecision}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

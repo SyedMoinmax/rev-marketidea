@@ -8,6 +8,7 @@ import {
   Plus, FileText, Send, TrendingUp, Star, ArrowRight, 
   CheckCircle, Clock, AlertCircle, Zap, Users
 } from "lucide-react";
+import RequestStatusTracker from "@/components/customer/RequestStatusTracker";
 
 const StatCard = ({ title, value, change, icon: Icon, color }) => (
   <Card className="border-border shadow-sm">
@@ -147,20 +148,28 @@ export default function Dashboard() {
         {(role === "customer" || role === "admin") && (
           <Card className="border-border shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between pb-4">
-              <CardTitle className="text-base font-semibold">Recent Requests</CardTitle>
+              <CardTitle className="text-base font-semibold">
+                {role === "customer" ? "My Requests" : "Recent Requests"}
+              </CardTitle>
               <Link to={role === "admin" ? "/admin/requests" : "/requests"}>
                 <Button variant="ghost" size="sm" className="text-primary text-xs">View all <ArrowRight className="ml-1 w-3 h-3" /></Button>
               </Link>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="px-4 pb-4">
               {requests.length === 0 ? (
-                <div className="px-6 pb-6 text-center">
+                <div className="text-center py-6">
                   <FileText className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
                   <p className="text-sm text-muted-foreground">No requests yet</p>
                   {role === "customer" && <Link to="/requests/new"><Button size="sm" className="mt-3 bg-primary text-white">Create First Request</Button></Link>}
                 </div>
+              ) : role === "customer" ? (
+                <div className="space-y-3">
+                  {requests.slice(0, 5).map((req) => (
+                    <RequestStatusTracker key={req.id} request={req} />
+                  ))}
+                </div>
               ) : (
-                <div className="divide-y divide-border">
+                <div className="divide-y divide-border -mx-4">
                   {requests.slice(0, 5).map((req) => (
                     <Link to={`/requests/${req.id}`} key={req.id}>
                       <div className="px-6 py-3 hover:bg-secondary/30 transition-colors">
