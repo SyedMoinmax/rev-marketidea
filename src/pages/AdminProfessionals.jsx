@@ -47,11 +47,23 @@ export default function AdminProfessionals() {
 
   const handleVerification = async (proId, status) => {
     setProcessing(true);
+    const pro = professionals.find(p => p.id === proId);
     await base44.entities.ProfessionalProfile.update(proId, {
       verification_status: status,
       verification_notes: reviewNote,
       is_active: status === "approved"
     });
+    if (pro) {
+      await base44.entities.Notification.create({
+        user_id: pro.user_id,
+        type: status === "approved" ? "verification_approved" : "verification_rejected",
+        title: status === "approved" ? "Your profile has been approved! 🎉" : "Profile verification update",
+        message: status === "approved"
+          ? "Congratulations! You can now browse and submit offers on customer requests."
+          : (reviewNote || "Your profile requires additional information. Please contact support."),
+        is_read: false
+      });
+    }
     setProfessionals(prev => prev.map(p => p.id === proId ? { ...p, verification_status: status, is_active: status === "approved" } : p));
     setSelectedPro(null);
     setReviewNote("");

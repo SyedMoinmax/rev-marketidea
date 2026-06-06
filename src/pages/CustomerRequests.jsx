@@ -10,6 +10,7 @@ import {
   Plus, Search, FileText, MapPin, Clock, Send, 
   DollarSign, ChevronRight, Filter, Loader2
 } from "lucide-react";
+import RequestStatusTracker from "@/components/customer/RequestStatusTracker";
 
 const STATUS_COLORS = {
   active: "bg-green-100 text-green-800",
@@ -113,37 +114,9 @@ export default function CustomerRequests() {
       ) : (
         <div className="space-y-4">
           {filtered.map((req) => (
-            <Link to={`/requests/${req.id}`} key={req.id}>
-              <Card className="border-border shadow-sm hover:shadow-md hover:border-primary/30 transition-all cursor-pointer">
-                <CardContent className="p-5">
-                  <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                    <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-foreground truncate">{req.title}</h3>
-                        <Badge className={`text-xs ${STATUS_COLORS[req.status] || "bg-secondary text-secondary-foreground"}`}>{req.status}</Badge>
-                        <Badge className={`text-xs ${PRIORITY_COLORS[req.priority] || ""}`}>{req.priority}</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{req.description}</p>
-                      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" /> {req.city || "—"}, {req.province || "—"}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <DollarSign className="w-3 h-3" />
-                          {req.budget_min ? `$${req.budget_min.toLocaleString()} - $${(req.budget_max || req.budget_min).toLocaleString()} CAD` : "Budget open"}
-                        </span>
-                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {req.timeline || "—"}</span>
-                        <span className="flex items-center gap-1"><Send className="w-3 h-3" /> {req.offer_count || 0} offers</span>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0 hidden sm:block" />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+            <div key={req.id}>
+              <RequestStatusTracker request={req} />
+            </div>
           ))}
         </div>
       )}
