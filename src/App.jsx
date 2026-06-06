@@ -12,6 +12,7 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
+import AuthRedirect from '@/pages/AuthRedirect';
 
 // Layout
 import AppLayout from '@/components/layout/AppLayout';
@@ -69,6 +70,7 @@ const AuthenticatedApp = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/auth-redirect" element={<AuthRedirect />} />
 
       {/* App Routes with Layout */}
       <Route element={<AppLayout />}>

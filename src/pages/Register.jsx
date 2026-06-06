@@ -98,7 +98,7 @@ export default function Register() {
   };
 
   const handleGoogle = () => {
-    base44.auth.loginWithProvider("google", "/dashboard");
+    base44.auth.loginWithProvider("google", "/auth-redirect");
   };
 
   // Step 1: Choose account type

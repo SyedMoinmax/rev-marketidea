@@ -61,13 +61,22 @@ const steps = [
 export default function Landing() {
   const [requests, setRequests] = useState([]);
   const [categoryData, setCategoryData] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     base44.entities.CustomerRequest.filter({ status: "active", is_public: true }, "-created_date", 6)
       .then(setRequests).catch(() => {});
     base44.entities.ServiceCategory.filter({ is_active: true }, "sort_order", 10)
       .then(setCategoryData).catch(() => {});
+    base44.auth.me().then(setCurrentUser).catch(() => {});
   }, []);
+
+  const getDashboardLink = () => {
+    if (!currentUser) return "/dashboard";
+    if (currentUser.role === "admin") return "/admin";
+    if (currentUser.role === "professional") return "/browse-requests";
+    return "/dashboard";
+  };
 
   const displayCategories = categoryData.length > 0
     ? categoryData.slice(0, 6).map((c, i) => ({ ...categories[i % categories.length], label: c.name }))
@@ -93,14 +102,29 @@ export default function Landing() {
             <a href="#live-requests" className="hover:text-white transition-colors">Live Requests</a>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/login">
-              <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10">Sign In</Button>
-            </Link>
-            <Link to="/register">
-              <Button size="sm" className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-violet-500/20 font-semibold">
-                Get Started
-              </Button>
-            </Link>
+            {currentUser ? (
+              <>
+                <Link to={getDashboardLink()}>
+                  <Button size="sm" className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-violet-500/20 font-semibold">
+                    {currentUser.role === "admin" ? "Admin Panel" : "Dashboard"}
+                  </Button>
+                </Link>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold cursor-pointer" onClick={() => window.location.href = "/profile"}>
+                  {currentUser.full_name?.[0]?.toUpperCase() || "U"}
+                </div>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10">Sign In</Button>
+                </Link>
+                <Link to="/register">
+                  <Button size="sm" className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-violet-500/20 font-semibold">
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
