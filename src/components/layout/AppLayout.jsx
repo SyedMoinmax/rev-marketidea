@@ -48,16 +48,23 @@ export default function AppLayout() {
 
   useEffect(() => {
     base44.auth.me().then((u) => {
-      setUser(u);
       if (u) {
+        // Auto-fix: if role is the platform default "user", upgrade to "customer"
+        if (!u.role || u.role === "user") {
+          base44.auth.updateMe({ role: "customer" }).then(() => {
+            setUser({ ...u, role: "customer" });
+          }).catch(() => setUser(u));
+        } else {
+          setUser(u);
+        }
         base44.entities.Notification.filter({ user_id: u.id, is_read: false }, "-created_date", 10)
           .then(setNotifications).catch(() => {});
       }
     }).catch(() => {});
   }, []);
 
-  const role = user?.role || "customer";
-  // professional role gets the professional nav; anything unrecognized falls back to customer
+  const rawRole = user?.role || "user";
+  const role = (rawRole === "user" || !rawRole) ? "customer" : rawRole;
   const links = navLinks[role] || navLinks.customer;
 
   const handleLogout = () => {
