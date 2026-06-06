@@ -11,7 +11,7 @@ import {
 import {
   Zap, LayoutDashboard, FileText, Send, MessageSquare,
   Bell, User, Settings, LogOut, Menu, X, ChevronDown,
-  Shield, Star, BarChart2, Users
+  Shield, Star, BarChart2, Users, Globe
 } from "lucide-react";
 import { Outlet } from "react-router-dom";
 
@@ -47,9 +47,13 @@ export default function AppLayout() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
-    base44.entities.Notification.filter({ is_read: false }, "-created_date", 10)
-      .then(setNotifications).catch(() => {});
+    base44.auth.me().then((u) => {
+      setUser(u);
+      if (u) {
+        base44.entities.Notification.filter({ user_id: u.id, is_read: false }, "-created_date", 10)
+          .then(setNotifications).catch(() => {});
+      }
+    }).catch(() => {});
   }, []);
 
   const role = user?.role || "customer";
@@ -96,6 +100,14 @@ export default function AppLayout() {
               );
             })}
           </nav>
+
+          {/* View Website */}
+          <div className="px-3 pb-2">
+            <Link to="/" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-all">
+              <Globe className="w-4 h-4 flex-shrink-0" />
+              View Website
+            </Link>
+          </div>
 
           {/* Bottom */}
           <div className="p-4 border-t border-sidebar-border">
